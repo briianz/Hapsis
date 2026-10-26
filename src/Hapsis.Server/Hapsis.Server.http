@@ -1,0 +1,6 @@
+@Hapsis.Server_HostAddress = http://localhost:5214
+
+GET {{Hapsis.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

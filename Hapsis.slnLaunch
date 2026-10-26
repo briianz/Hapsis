@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "src\\Hapsis.Server\\Hapsis.Server.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Hapsis.TestClient\\Hapsis.TestClient.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
