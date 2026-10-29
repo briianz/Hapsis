@@ -29,6 +29,7 @@ app.Map("/ws", async (HttpContext context, Hapsis.Server.Managers.ConnectionMana
                 if (packet != null)
                 {
                     Console.WriteLine($"Recieved packet from {clientId}! Type: {packet.PacketType}");
+                    
                     var responsePacket = new Hapsis.Shared.Models.BasePacket
                     {
                         PacketType = 2, // Válasz csomag típusa
