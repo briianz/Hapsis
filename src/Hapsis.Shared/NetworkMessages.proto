@@ -13,7 +13,7 @@ enum MessageType{
 
 //Wrapper for all the different types of messages
 message NetworkEnvelope{
-	MessageType type = 1;
+	MessageType message_type = 1;
 	oneof payload{
 		JoinRoomRequest	join_room_req = 2;
 		JoinRoomResponse join_room_resp = 3;
