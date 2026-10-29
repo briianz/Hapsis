@@ -1,26 +1,38 @@
 ﻿using Hapsis.ClientSDK;
-using Hapsis.Shared.Models;
+using Hapsis.Shared.Network;
 
-Console.WriteLine("Click [Enter] to connect to the server...");
-Console.ReadLine();
+Console.WriteLine("Hapsis Teszt Kliens indítása...");
 
 var client = new HapsisClient();
-client.OnPacketReceived += (packet) =>
+
+client.OnConnected += () => Console.WriteLine("[Client] Sikeresen csatlakozva a szerverhez!");
+client.OnDisconnected += () => Console.WriteLine("[Client] Kapcsolat bontva.");
+client.OnMessageReceived += (envelope) =>
 {
-    var message = System.Text.Encoding.UTF8.GetString(packet.Payload);
-    Console.WriteLine($"Client got: {message}");
+    Console.WriteLine($"[Client] Üzenet érkezett a szervertől: {envelope.MessageType}");
 };
+
+// Csatlakozás a szerverhez
 await client.ConnectAsync("ws://localhost:42774/ws");
-Console.WriteLine("Succesfully connected to the HAPSIS server!");
 
-var testPacket = new BasePacket
+// Teszt üzenet küldése
+if (client.IsConnected)
 {
-    PacketType = 1,
-    SenderId = "TesztJatekos_01",
-    Payload = new byte[] { 10, 20, 30 }
-};
+    var testEnvelope = new NetworkEnvelope
+    {
+        MessageType = MessageType.JoinRoomReq,
+        JoinRoomReq = new JoinRoomRequest
+        {
+            PlayerName = "TesztJatekos",
+            RoomId = "room-101"
+        }
+    };
 
-await client.SendAsync(testPacket);
-Console.WriteLine("Tesztcsomag elküldve!");
+    await client.SendAsync(testEnvelope);
+    Console.WriteLine("[Client] JoinRoomReq teszt üzenet elküldve a szervernek.");
+}
 
+Console.WriteLine("Nyomj Entert a kilépéshez...");
 Console.ReadLine();
+
+await client.DisconnectAsync();
