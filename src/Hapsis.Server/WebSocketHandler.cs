@@ -1,74 +1,66 @@
-﻿using Google.Protobuf;
+﻿using System.Net.WebSockets;
+using Google.Protobuf;
 using Hapsis.Shared.Network;
-using ProtoBuf;
-using System.Net.WebSockets;
 
+namespace Hapsis.Server;
 
-namespace Hapsis.Server
+public class WebSocketHandler
 {
-    public class WebSocketHandler
+    private const int BufferSize = 4096;
+    private static readonly GameRoom DefaultRoom = new("default-room", new PongGameLogic());
+
+    public async Task HandleConnectionAsync(WebSocket webSocket)
     {
-        private const int BufferSize = 4096;
+        var buffer = new byte[BufferSize];
+        int playerId = -1;
 
-        public async Task HandleConnectionAsync(WebSocket webbSocket)
-        { 
-            var buffer = new byte[BufferSize];
+        try
+        {
+            while (webSocket.State == WebSocketState.Open)
+            {
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
-            try {
-                while (webbSocket.State == WebSocketState.Open)
+                if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    var result = await webbSocket.ReceiveAsync(
-                        new ArraySegment<byte>(buffer),
-                        CancellationToken.None
-                        );
+                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnected", CancellationToken.None);
+                    break;
+                }
 
-                    if (result.MessageType == WebSocketMessageType.Close)
+                if (result.MessageType == WebSocketMessageType.Binary)
+                {
+                    var envelope = NetworkEnvelope.Parser.ParseFrom(buffer, 0, result.Count);
+
+                    if (envelope.MessageType == MessageType.JoinRoomReq)
                     {
-                        await webbSocket.CloseAsync(
-                            WebSocketCloseStatus.NormalClosure,
-                            "Disconnected",
-                            CancellationToken.None
-                            );
-                        break;
+                        if (DefaultRoom.AddPlayer(webSocket, out playerId))
+                        {
+                            Console.WriteLine($"[HAPSIS] Player Connected! ID: {playerId}");
+
+                            var response = new NetworkEnvelope
+                            {
+                                MessageType = MessageType.JoinRoomResp,
+                                JoinRoomResp = new JoinRoomResponse
+                                {
+                                    Success = true,
+                                    PlayerId = playerId,
+                                    RoomId = DefaultRoom.RoomId
+                                }
+                            };
+
+                            byte[] bytes = response.ToByteArray();
+                            await webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, CancellationToken.None);
+                        }
                     }
-
-                    if (result.MessageType == WebSocketMessageType.Binary)
+                    else if (envelope.MessageType == MessageType.PlayerInput && playerId != -1)
                     {
-                        ProcessBinaryMessage(buffer, result.Count);
+                        DefaultRoom.RouteInput(playerId, envelope.PlayerInput);
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"WebSocket connection error: {ex.Message}");
             }
         }
-
-        private void ProcessBinaryMessage(byte[] buffer, int count)
+        catch (Exception ex)
         {
-            try {
-                var envelope = NetworkEnvelope.Parser.ParseFrom(buffer, 0, count);
-                Console.WriteLine($"Received message of type: {envelope.MessageType}");
-
-                switch (envelope.MessageType)
-                {
-                    case MessageType.JoinRoomReq:
-                        Console.WriteLine($" -> Csatlakozási kérelem: {envelope.JoinRoomReq.PlayerName} (Szoba: {envelope.JoinRoomReq.RoomId})");
-                        break;
-
-                    case MessageType.PlayerInput:
-                        Console.WriteLine($" -> Bemenet érkezett: Player {envelope.PlayerInput.PlayerId} (Y: {envelope.PlayerInput.InputY})");
-                        break;
-
-                    default:
-                        Console.WriteLine(" -> Ismeretlen üzenettípus.");
-                        break;
-                }
-            }
-            catch (InvalidProtocolBufferException ex)
-            {
-                Console.WriteLine($"Sérült Protobuf csomag érkezett: {ex.Message}");
-            }
+            Console.WriteLine($"Error during the management of the connection: {ex.Message}");
         }
     }
 }
