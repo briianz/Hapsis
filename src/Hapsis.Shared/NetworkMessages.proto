@@ -9,6 +9,8 @@ enum MessageType{
 	JOIN_ROOM_RESP = 2;
 	PLAYER_INPUT = 3;
 	WORLD_STATE_UPDATE =4;
+	PING_REQ = 5;
+	PONG_RESP = 6;
 }
 
 //Wrapper for all the different types of messages
@@ -19,6 +21,8 @@ message NetworkEnvelope{
 		JoinRoomResponse join_room_resp = 3;
 		PlayerInputMessage player_input = 4;
 		WorldStateUpdateMessage world_state_update = 5;
+		PingRequest ping_req = 6;
+		PongResponse pong_resp = 7;
 	}
 }
 
@@ -56,4 +60,12 @@ message EntityState{
 message WorldStateUpdateMessage{
 	uint64 sequence_number = 1;
 	repeated EntityState entities = 2;
+}
+
+message PingRequest{
+int64 timestamp = 1;
+}
+
+message PongResponse{
+int64 timestamp = 1;
 }
