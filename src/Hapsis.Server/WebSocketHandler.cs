@@ -1,4 +1,5 @@
-﻿using System.Net.WebSockets;
+﻿using System;
+using System.Net.WebSockets;
 using Google.Protobuf;
 using Hapsis.Shared.Network;
 
@@ -7,12 +8,18 @@ namespace Hapsis.Server;
 public class WebSocketHandler
 {
     private const int BufferSize = 4096;
-    private static readonly GameRoom DefaultRoom = new("default-room", new PongGameLogic());
+    private readonly RoomManager _roomManager;
+
+    public WebSocketHandler(RoomManager? roomManager = null)
+    {
+        _roomManager = roomManager ?? new RoomManager();
+    }
 
     public async Task HandleConnectionAsync(WebSocket webSocket)
     {
         var buffer = new byte[BufferSize];
         int playerId = -1;
+        GameRoom? currentRoom = null;
 
         try
         {
@@ -22,7 +29,6 @@ public class WebSocketHandler
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnected", CancellationToken.None);
                     break;
                 }
 
@@ -32,9 +38,15 @@ public class WebSocketHandler
 
                     if (envelope.MessageType == MessageType.JoinRoomReq)
                     {
-                        if (DefaultRoom.AddPlayer(webSocket, out playerId))
+                        string requestedRoomId = string.IsNullOrEmpty(envelope.JoinRoomReq.RoomId)
+                            ? "default-room"
+                            : envelope.JoinRoomReq.RoomId;
+
+                        currentRoom = _roomManager.GetOrCreateRoom(requestedRoomId);
+
+                        if (currentRoom.AddPlayer(webSocket, out playerId))
                         {
-                            Console.WriteLine($"[HAPSIS] Player Connected! ID: {playerId}");
+                            Console.WriteLine($"[HAPSIS] Player Connected! ID: {playerId} | Room: {currentRoom.RoomId}");
 
                             var response = new NetworkEnvelope
                             {
@@ -43,7 +55,7 @@ public class WebSocketHandler
                                 {
                                     Success = true,
                                     PlayerId = playerId,
-                                    RoomId = DefaultRoom.RoomId
+                                    RoomId = currentRoom.RoomId
                                 }
                             };
 
@@ -51,16 +63,24 @@ public class WebSocketHandler
                             await webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, CancellationToken.None);
                         }
                     }
-                    else if (envelope.MessageType == MessageType.PlayerInput && playerId != -1)
+                    else if (envelope.MessageType == MessageType.PlayerInput && playerId != -1 && currentRoom != null)
                     {
-                        DefaultRoom.RouteInput(playerId, envelope.PlayerInput);
+                        currentRoom.RouteInput(playerId, envelope.PlayerInput);
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during the management of the connection: {ex.Message}");
+            Console.WriteLine($"Error during connection handling: {ex.Message}");
+        }
+        finally
+        {
+            if (webSocket.State != WebSocketState.Closed)
+            {
+                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnected", CancellationToken.None);
+            }
+            Console.WriteLine($"[HAPSIS] Player disconnected (ID: {playerId}).");
         }
     }
 }
