@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Google.Protobuf;
 using Hapsis.Shared.Network;
 
-namespace Hapsis.ClientSDK;
 ///<summary>
 /// Hapsis Framework's client-side SDK.
 ///This class manages the WebSocket connections, threadsafe messaging, Ping/RTT measurments and event messages
@@ -19,12 +18,8 @@ public class  HapsisClient
     private CancellationTokenSource? _pingCts;
 
     //Lock to prevent concurrent WebSocket calls
-    private readonly SemaphoreSlim _sendLock = new(1, 1);
+    private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
 
-    //Events forward the client application
-    public event Action<NetworkEnvelope>? OnMessageReceived;
-    public event Action? OnConnected;
-    public event Action? OnDisconnected;
 
     //Framework events exposed to you, game devs:
     public event Action<NetworkEnvelope>? OnMessageReceived; // --> When a client receives a message from the server
@@ -122,9 +117,7 @@ public class  HapsisClient
     /// </summary>
     private async Task StartPingLoopAsync(CancellationToken ct)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-
-        while (!ct.IsCancellationRequested && await timer.WaitForNextTickAsync(ct))
+        while (!ct.IsCancellationRequested)
         {
             if (!IsConnected) break;
 
@@ -134,6 +127,16 @@ public class  HapsisClient
                 MessageType = MessageType.PingReq,
                 PingReq = new PingRequest { Timestamp = currentTimestamp }
             });
+
+            try
+            {
+                // Várunk 1 másodpercet a következő pingig
+                await Task.Delay(TimeSpan.FromSeconds(1), ct);
+            }
+            catch (TaskCanceledException)
+            {
+                break; // Ha a CancellationTokent megszakítják, kilépünk
+            }
         }
     }
 
@@ -159,7 +162,22 @@ public class  HapsisClient
                 if (result.MessageType == WebSocketMessageType.Binary)
                 {
                     var envelope = NetworkEnvelope.Parser.ParseFrom(buffer, 0, result.Count);
-                    OnMessageReceived?.Invoke(envelope);
+                    switch(envelope.MessageType)
+                    {
+                        case MessageType.PongResp:
+                            long currentTimestamp = Stopwatch.GetTimestamp();
+                            double elapsedMs = (currentTimestamp - envelope.PongResp.Timestamp) / (Stopwatch.Frequency / 1000.0);
+                            Ping = (int)elapsedMs;
+                            OnPingUpdated?.Invoke(Ping);
+                            break;
+
+                        default:
+                            //Minden más csomagot átadunk
+                            OnMessageReceived?.Invoke(envelope);
+                            break;
+
+
+                    }
                 }
             }
         }

@@ -15,8 +15,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hapsis.Server", "src\Hapsis
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hapsis.Dashboard", "src\Hapsis.Dashboard\Hapsis.Dashboard.csproj", "{FCE8F634-FE2F-4E67-BD90-372306992551}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hapsis.TestClient", "src\Hapsis.TestClient\Hapsis.TestClient.csproj", "{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,18 +85,6 @@ Global
 		{FCE8F634-FE2F-4E67-BD90-372306992551}.Release|x64.Build.0 = Release|Any CPU
 		{FCE8F634-FE2F-4E67-BD90-372306992551}.Release|x86.ActiveCfg = Release|Any CPU
 		{FCE8F634-FE2F-4E67-BD90-372306992551}.Release|x86.Build.0 = Release|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Debug|x64.Build.0 = Debug|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Debug|x86.Build.0 = Debug|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Release|x64.ActiveCfg = Release|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Release|x64.Build.0 = Release|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Release|x86.ActiveCfg = Release|Any CPU
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -109,6 +95,5 @@ Global
 		{260D10B5-824C-4CD8-977A-60E3B4AFBEB0} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{6700D315-840B-4CC9-80E1-ACAA5421C2ED} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{FCE8F634-FE2F-4E67-BD90-372306992551} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
-		{4CC9305D-950F-47FF-BAB6-FEE2E3F1A59C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
